@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head id="header">
+	<title>11x</title>
+	<link rel="stylesheet" href="css/normalize.css">
+	<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+	<link rel="stylesheet" href="css/style.css">
+	<link rel="shortcut icon" href="favicon.ico" />
+</head>
+
+<body>
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div id="main" class="span12 hero-unit">
+				<h1>A tribute to Stefanie Posavec's awesome 11x series.</h1>
+			<div class="row-fluid">
+				<div id="multiplicands" class="span3">
+					<form name="numberForm">
+						<fieldset>
+							<legend>Enter your inputs</legend>
+							<input class="span2" type="text" name="inputOne" placeholder="11"><br>
+							x <input class="span2" type="text" name="inputTwo" placeholder="11"><br>							
+							x <input class="span2" type="text" name="inputThree" placeholder="111"><br>
+							x <input class="span3" type="text" name="inputFour" placeholder="11111"><br>
+							x <input class="span4" type="text" name="inputFive" placeholder="111111111"><br>
+							x <input class="span6" type="text" name="inputSix" placeholder="11111111111111111"><br>
+							x <input class="span11" type="text" name="inputSeven" placeholder="111111111111111111111111111111111"><br>
+							<button type="button" id="addToFavorites" class="btn" onclick="">Add to Favorites</button>
+							<button type="button" id="updateNumbers" class="btn" onclick="updateMultiplicands()">Do Math!</button>
+						</fieldset>
+					</form>
+
+					<label>Favorites</label>
+					<select name="favorites" size="5">
+					  <option>11 x 11 x 111 x 11111</option>
+					  <option>11 x 11 x 111 x 11111</option>
+					  <option>11 x 11 x 111 x 11111</option>
+					  <option>11 x 11 x 111 x 11111</option>
+					  <option>11 x 11 x 111 x 11111</option>
+					</select>
+				</div>
+				<div class="span9">
+					<p>Create your own visualization!</p>
+					<ul>
+						<li>Fill in all the inputs with the correct number of digits</li>
+						<li>Submit to populate the data</li>
+						<li>Enjoy experimenting!</li>
+					</ul>
+					<div id="math">
+						<label class="checkbox" value="">
+							<input type="checkbox" name="addText" value="showText" id="addText"/>
+							Check to show numbers
+						</label>
+						<div id="eq-def">
+							<p>11 x 11 x 111 x 1111</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+	<script src="js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="scripts/jquery-1.10.2.min.js"></script>
+	<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+	<script type="text/javascript" src="scripts/11-x-series.js"></script>
+
+
+</html>
