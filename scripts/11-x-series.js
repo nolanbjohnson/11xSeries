@@ -1,40 +1,125 @@
-var data = [{"type": "input one", "value": [1,1]},
-			{"type": "input two", "value": [1,1]},
-			{"type": "intermezzo one", "value": [1,1]},
-			{"type": "intermezzo one", "value": [1,1]},
-			{"type": "result one", "value": [1,2,1]},
-			{"type": "input three", "value": [1,1,1]},
-			{"type": "intermezzo two", "value": [1,2,1]},
-			{"type": "intermezzo two", "value": [1,2,1]},
-			{"type": "intermezzo two", "value": [1,2,1]},
-			{"type": "result two", "value": [1,3,4,3,1]},
-			{"type": "input four", "value": [1,1,1,1,1]},
-			{"type": "intermezzo three", "value": [1,3,4,3,1]},
-			{"type": "intermezzo three", "value": [1,3,4,3,1]},
-			{"type": "intermezzo three", "value": [1,3,4,3,1]},
-			{"type": "intermezzo three", "value": [1,3,4,3,1]},
-			{"type": "intermezzo three", "value": [1,3,4,3,1]},
-			{"type": "result three", "value": [1,4,9,2,3,1,8,4,1]}];
 //setup
+var data = math
+
 var paths = [{"id": 2, "type": "path", "d": "m 0,0 16.246395,0.1025 c -0.21915,-21.7265 -16.230378,-21.4773 -16.246395,-0.1025 z"}];
 
-var w = 700, h = 1000, padding = 20, offset = 25, radius = 10;
+var w = 1000, h = 1500, padding = 20, offset = 11, radius = 4;
+
+
+function useOption(name) {
+
+	if (typeof(name)==="undefined") { name = "fourOptions" }
+	var checked = getCheckedRadioId(name)
+	var inputs
+	switch(checked) {
+		case "11x10":
+			inputs = ["11", "10", "101", "10101", "101010101", "10101010101010101", "101010101010101010101010101010101"];
+			break;
+		case "11x13":
+			inputs = ["11", "12", "123", "12345", "123456789", "12345678912345678", "123456789123456789123456789123456"];
+			break;
+		case "11x11":
+			inputs = ["11","11","111","11111","111111111","11111111111111111","111111111111111111111111111111111"];
+			break;
+		case "11x12":
+			inputs = ["11", "12", "121", "12121", "121212121", "12121212121212121", "121212121212121212121212121212121"];
+			break;
+		default:
+			inputs = null;
+			break;
+	}
+	if (inputs !== null) {
+		makeNewViz(inputs);
+	}
+}
+
+function getCheckedRadioId(name) {
+    var elements = document.getElementsByName(name);
+
+    for (var i=0, len=elements.length; i<len; ++i)
+        if (elements[i].checked) return elements[i].value;
+}
+
+function makeNewViz(inputs) {
+	
+	if (typeof(inputs)==='undefined') var inputs = getFrmInputs();
+
+	var results = updateData(inputs);
+
+	document.getElementById("math-string").innerHTML = inputsToString(inputs)
+
+	//half-assing it for now
+	for (i=0; i < data.length; i++) {
+		data[i].value = results[i];
+	}
+
+	update(data)
+
+}
+
+function getFrmInputs() {
+	var frm = document.numberForm, 
+	input1 = frm.inputOne,
+	input2 = frm.inputTwo,
+	input3 = frm.inputThree,
+	input4 = frm.inputFour,
+	input5 = frm.inputFive,
+	input6 = frm.inputSix,
+	input7 = frm.inputSeven,
+	inputs = [input1.value, input2.value, input3.value, input4.value, input5.value, input6.value, input7.value];
+	return inputs
+}
+
+function updateData(inputs) {
+
+	var results = []
+	results.push(stringToNumber(inputs[0].split('').reverse()))
+	var lastResult = inputs[0]
+	for (var i=1; i < inputs.length; i++) {
+		//console.log(inputs[i])
+		results.push(stringToNumber(inputs[i].split('').reverse()))
+		results = results.concat(snglDgtMult(lastResult,inputs[i]))
+		var n1 = new BigInteger(lastResult) //a string to new BigInteger for multiplying
+		var n2 = new BigInteger(inputs[i])
+		lastResult = n1.multiply(n2).toString()
+		//console.log(n1.toString() + ' x ' + n2.toString() + '=' + lastResult)
+		results.push(stringToNumber(lastResult.split('').reverse()))
+	}
+	return results;
+}
+
+//var results = []
+//results = results.concat(updateData(inputs))
+
+
+function inputsToString(inputs) {
+	var multString = ""
+	for (i=0; i < inputs.length; i++) {
+		if (multString === "") {
+			multString = inputs[i].commafy();
+		}else {
+			multString = multString + " x " + inputs[i].commafy()
+		}
+	}
+	return multString
+}
 
 function updateMultiplicands() {
 	
-	var frm = document.numberForm;
-	var input1 = frm.inputOne;
-	var input2 = frm.inputTwo;
-	var input3 = frm.inputThree;
-	var input4 = frm.inputFour;
-	var input5 = frm.inputFive;
-	var input6 = frm.inputSix;
-	var input7 = frm.inputSeven;
-	numbers = [];
-	intermezzo = [];
-	dataUpdate = [];
-	results = [];
-	inputs = [input1 ,input2 , input3, input4, input5, input6, input7];
+	var frm = document.numberForm, 
+		input1 = frm.inputOne,
+		input2 = frm.inputTwo,
+		input3 = frm.inputThree,
+		input4 = frm.inputFour,
+		input5 = frm.inputFive,
+		input6 = frm.inputSix,
+		input7 = frm.inputSeven,
+		numbers = [],
+		intermezzo = [],
+		dataUpdate = [],
+		results = [],
+		inputs = [input1 ,input2 , input3, input4, input5, input6, input7];
+
 	numbers.push(stringToNumber(splitInput(inputs[0].value))) //add the first input to the array
 	dataUpdate.push(jsonMake(numbers[0],"input zero"))
 	results.push(input1.value) //throwaway for the value to use to compute the next result
@@ -63,122 +148,19 @@ function updateMultiplicands() {
 	update(data);
 }
 
-function doubleDigit(array) {
-	for (var j=0; j < array.length - 1; j++) {
-		for (var k=0; k < array[j].length - 1; k++) {
-			if (array[j][k] > 9) {
-				if (k+1 < array[j].length) {
-					array[j][k+1] = array[j][k+1] + (array[j][k] - 10);					
-				} else {
-					array[j].push(array[j][k]-10)
-				}
-			}
-		}
-	}
-	return array	
-}
 
-function numberToNumeric(number) {
-	switch(number) {
-	case 0:
-		return "zero";
-	case 1:
-		return "one";
-	case 2:
-		return "two";
-	case 3:
-		return "three";
-	case 4:
-		return "four";
-	case 5:
-		return "five";
-	case 6:
-		return "six";
-	case 7:
-		return "seven";
-	case 8:
-		return "eight";
-	case 9:
-		return "nine";
-}
-}
-
-
-function stringToNumber(array) {
-	if (typeof(array) === "string") {
-		return +array
-	}	
-	for(var i=0; i < array.length; i++) {
-		array[i] = +array[i]
-	}
-	return array
-}
-
-function numberToString(array) {
-	if (typeof(array) === "number") {
-		return '' + array
-	}
-	for(var i=0; i < array.length; i++) {
-		array[i] = '' + array[i]
-	}
-	return array
-}
-
-function splitInput(input) {
-	return input.split("")
-}
-
-function jsonMake(input, type) {
-	var obj = {}
-	obj.type = type
-	obj.value = input
-	return obj;
-}
-
-function finalResults(input) {
-	var result = [];
-	for (var i = 1; i < input.length; i++) {
-		if (i === 1) {
-			result.push(input[0] * input[i]);
-		} else {
-			result.push(input[i] * result[result.length-1]);
-		}
-	}
-	return result;
-}
-
-/*var results = finalResults(inputs)
-*/
-var m1 = [[1,3,4,3,1]];
-var m2 = [[1,0,1,1,1]];
-
-function multiplyMatrix(m1, m2) {
-    var result = [];
-    for(var j = 0; j < m2.length; j++) {
-        result[j] = [];
-        for(var k = 0; k < m1[0].length; k++) {
-            var sum = 0;
-            for(var i = 0; i < m1.length; i++) {
-                sum += m1[i][k] * m2[j][i];
-            }
-            result[j].push(sum);
-        }
-    }
-    return result;
-}
 
 var intermezzo1 = multiplyMatrix(m1, d3.transpose(m2)); //transpose one of the two so that we have each resulting value
 
-function reverseEach(arr) {
-	var newArr = [];
-	for(var i = 0; i < arr.length; i++) {
-		newArr.push(arr[i].value.reverse());
-	}
-	return newArr;
-}
 
-var dataReversed = reverseEach(data); //reverse each individual 
 
+
+//var dataReversed = reverseEach(data); //reverse each individual 
+
+/*var results = finalResults(inputs)
+*/
+var m1 = [[1,6,5,8,1,3,1,5,6,5,0,0,8,5,3,5,2]];
+var m2 = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
 
 function doGroups(selection) {
          var groups = []
@@ -205,26 +187,10 @@ function doGroups(selection) {
 };
 */
 
-/*var x = d3.scale.linear()
-	.domain([0, data.length])
-	.range([0, width]);
-
-var y = d3.scale.linear()
-	.domain([0, d3.max(data, function(d) { return d.value; })])
-	.rangeRound([0,height]);*/
-
-var x = function(index) {
-
-}
-
-var shift = function(index) {
-
-};
-
 function colorPicker(number) {
 	switch(number) {
 		case 0:
-			return "#FFFFFF";
+			return "#cccccc";
 		case 1:
 			return "#65cace";
 		case 2:
@@ -313,19 +279,22 @@ var circles = g.selectAll("circle")
 			  .data(function(d, i) { return d.value; })
 			  .enter()
 			  .append("circle")
-			  .attr("r","1")
+			  .attr("r","2")
 			  .attr("cx",0)
 			  .attr("cy",0)
 	  	      .attr("fill", function(d, i) { return colorPicker(d); })
 		      .attr("stroke", "none")
+		      .attr("pointer-events","none")
 
 circles.transition()
-	   .duration(250)
-	   .delay(function(d, i) { return i * 100; })
+	   .duration(1000)
+	   .delay(function(d, i) { return i * 25; })
 	   .ease("easeInOutBack")
-	   .attr("r", radius)
 	   .attr("cx", function(d, i) { return w - offset * i; })
 	   .attr("cy", offset)
+	   .transition()
+	   .attr("r", radius)
+	   .each("end", function(d, i) { d3.select(this).attr("pointer-events", null); })
 
 //.attr("class",function(d, i) { return classAssign(i); })
 circles.on("mouseover", function(d, i) {
@@ -337,25 +306,31 @@ circles.on("mouseout", function(d, i) {
 	  .attr("r", radius);
 })
 
+optionButton = d3.select("input[name=fourOptions]")
+
+$('input[name=fourOptions]').click(function() {
+	useOption('fourOptions')
+});
+
 var yScale = d3.scale.ordinal()
 						.domain(d3.range(data.length))
 						.rangeRoundBands([0,h], 0.05);
 
 function update(data) {
 
-g.data(data)
- .enter()
- .append("g");
+	g.data(data)
+	 .enter()
+	 .append("g");
 
-circles.data(function(d, i) { return d.value; })
-	   .enter()
-	   .append("circle")
+	circles.data(function(d, i) { return d.value; })
+		   .enter()
+		   .append("circle")
 
-appendText()
+	appendText()
 
-circles.attr("fill", function(d, i) { return colorPicker(d); });
+	circles.attr("fill", function(d, i) { return colorPicker(d); });
 
-//circles.exit().remove();
+	//circles.exit().remove();
 }
 
 function appendText() {
@@ -370,27 +345,46 @@ function appendText() {
 		text.text(function(d) { return d; })
 			.attr("x", function(d, i) { return w - offset * i; })
 			.attr("y", offset)
+			.attr("style", "font-size: " + Math.round(radius * 2.5) + ";")
 			.attr("opacity",1)
 			.attr("text-anchor", "middle")
 			//.attr("style", "dominant-baseline: central;")	
 
-		circles.transition()
-			   .duration(1000)
-			   .delay(function(d, i) { return i * 20; })
-			   .attr("opacity",0.1)
+		circles//.transition()
+			   //.delay(400)
+			   //.duration(500)
+			   //.delay(function(d, i) { return i ; })
+			   //.attr("opacity",0.25)
+			   .classed("dim-circle", true)
+			   .transition()
+			   .delay(1000)
+			   .duration(1800)
 			   .attr("cx", w + offset)
+			   //.attr("opacity",0.03)
+			   .each("end", function(d,i) {
+			   					d3.select(this).attr("class", "hide-circle")
+			   				})
 			   //.attr("cy",function(d, i) { return 0 /* - g[0][i].getCTM().f;*/ })
 			   //.attr("r", function(d, i) { return i ; })
 	} else {
-		circles.transition()
-			   .attr("opacity",1)
+		circles.attr("class", "dim-circle")
+				.transition()
+				.delay(500)
+			   .duration(1800)
 			   .attr("cx", function(d, i) { return w - offset * i; })
 			   .attr("cy", offset)
-			   .attr("r", radius)
+			   //.attr("opacity",0.25)
+			   .each("end", function(d,i) {
+			   					d3.select(this).classed("dim-circle", false)
+			   				})
+
+			   //.attr("r", radius)
+			   
 
 		var text = g.selectAll("text")
 
 		text.transition()
+		 .delay(2000)
 		 .duration(500)
 		 .attr("opacity",0)
 		 .each("end", function(d, i) { d3.select(this).remove(); })

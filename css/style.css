@@ -2,7 +2,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background-color: gray;
+  background-color: white;
 }
 
 #main h1 {
@@ -21,6 +21,10 @@ body {
 	text-align: right;
 }
 
+.options {
+	font-size: 20px;
+}
+
 #math span {
 	position: relative;
 	width: 25px;
@@ -36,6 +40,12 @@ body {
 	-ms-interpolation-mode:nearest-neighbor;   /* IE8+                           */
 }
 
+#eq-def p {
+	font-size: 14px;
+	font-weight: normal;
+	color: #ccc;
+}
+
 .equation {
 	border-bottom: 1px #ccc solid;
 	padding: 5px 0px;
@@ -46,17 +56,24 @@ body {
 
 g text {
 	font-weight: normal;
-	font-size: 14px;
 	dominant-baseline: central;
-	fill: #333;
+	fill: #000;
 	pointer-events: none;
 }
 
-g text:hover {
-	opacity: 100;
+.dim-circle {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+
+.hide-circle {
+	opacity: 0.03;
+	pointer-events: none;
 }
 
 g circle {
+ 	/*shape-rendering: optimizeSpeed;*/
 	-moz-transition: all 0.3s;
    	-o-transition: all 0.3s;
    	-webkit-transition: all 0.3s;
