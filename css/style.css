@@ -10,6 +10,10 @@ body {
 	margin-bottom: 20px;	
 }
 
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
 
 #math {
 
@@ -44,6 +48,11 @@ body {
 	font-size: 14px;
 	font-weight: normal;
 	color: #ccc;
+}
+
+
+g {
+	background-color: #fff;
 }
 
 .equation {

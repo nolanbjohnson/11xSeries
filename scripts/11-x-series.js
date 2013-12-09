@@ -29,8 +29,19 @@ function useOption(name) {
 			break;
 	}
 	if (inputs !== null) {
+		inputsToTextBox(inputs);
 		makeNewViz(inputs);
 	}
+}
+
+function inputsToTextBox(inputs){
+	var frm = document.numberForm
+	var frmElements = frm.getElementsByTagName("input")
+
+	for (i=0; i < frmElements.length; i++) {
+		frmElements[i].value = inputs[i];
+	}
+
 }
 
 function getCheckedRadioId(name) {
@@ -44,22 +55,34 @@ function makeNewViz(inputs) {
 	
 	if (typeof(inputs)==='undefined') var inputs = getFrmInputs();
 
-	var results = updateData(inputs);
+	data = updateData(inputs);
 
 	document.getElementById("math-string").innerHTML = inputsToString(inputs)
 
 	//half-assing it for now
-	for (i=0; i < data.length; i++) {
+/*	for (i=0; i < data.length; i++) {
 		data[i].value = results[i];
-	}
+	}*/
+	var length = 0
 
+	
 	update(data)
 
 }
 
+var scaleZoom = d3.scale.pow().exponent(.2)
+					.domain([1,1700])
+					.range([5, 1])
+
+function updateRadius(num) {
+	radius = scaleRadius(num)
+	offset = radius * 2.4
+	console.log(radius + ", " + offset)
+}
+
 function getFrmInputs() {
-	var frm = document.numberForm, 
-	input1 = frm.inputOne,
+	var frm = document.numberForm
+	/*input1 = frm.inputOne,
 	input2 = frm.inputTwo,
 	input3 = frm.inputThree,
 	input4 = frm.inputFour,
@@ -67,6 +90,13 @@ function getFrmInputs() {
 	input6 = frm.inputSix,
 	input7 = frm.inputSeven,
 	inputs = [input1.value, input2.value, input3.value, input4.value, input5.value, input6.value, input7.value];
+*/
+	var inputs = []
+	var frmElements = frm.getElementsByTagName("input")
+
+	for (i=0; i < frmElements.length; i++) {
+		if (frmElements[i].value != "") { inputs.push(frmElements[i].value) };
+	}
 	return inputs
 }
 
@@ -75,17 +105,26 @@ function updateData(inputs) {
 	var results = []
 	results.push(stringToNumber(inputs[0].split('').reverse()))
 	var lastResult = inputs[0]
+	var interResults = []
+	var jsonMath = []
+	jsonMath.push(jsonMake(results[results.length-1],"input " + numberToNumeric(1)))
 	for (var i=1; i < inputs.length; i++) {
 		//console.log(inputs[i])
 		results.push(stringToNumber(inputs[i].split('').reverse()))
-		results = results.concat(snglDgtMult(lastResult,inputs[i]))
+		jsonMath.push(jsonMake(results[results.length-1],"input " + numberToNumeric(i + 1)))
+		interResults = snglDgtMult(lastResult,inputs[i])
+		results = results.concat(interResults)
+		interResults.forEach(function (entry) {
+			jsonMath.push(jsonMake(entry,"intermezzo " + numberToNumeric(i)))
+		})		
 		var n1 = new BigInteger(lastResult) //a string to new BigInteger for multiplying
 		var n2 = new BigInteger(inputs[i])
 		lastResult = n1.multiply(n2).toString()
 		//console.log(n1.toString() + ' x ' + n2.toString() + '=' + lastResult)
 		results.push(stringToNumber(lastResult.split('').reverse()))
+		jsonMath.push(jsonMake(results[results.length-1],"result " + numberToNumeric(i)))
 	}
-	return results;
+	return jsonMath;
 }
 
 //var results = []
@@ -247,64 +286,136 @@ var classAssign = function(index) {
 	}
 	return className
 };
+
+zoomIn = d3.behavior.zoom().scaleExtent([0.75, 5]).center([w,0]).on("zoom", zoom)
+
 var svg = d3.select('#math')
 			.append("svg")
 			.attr("width", w + padding * 2)
-			.attr("height", h + padding * 2);
-
-//bind the array of arrays to the groups (one for each row of the visualization)
-var g = svg.selectAll("g")
-			.data(data)
-			.enter()
+			.attr("height", h + padding * 2)
 			.append("g")
-			.attr("class", function(d) { return d.type; });
+    		.call(zoomIn);
 
-//shift the rows to the left to align accordingly
-for (var i=1; i < 7; i++) {
-	svg.selectAll("g.intermezzo." + numberToNumeric(i))
-		.attr("transform", function(d, i) { return "translate(" + (-i * offset) + ",0)"; })
+ svg.append("rect")
+    .attr("class", "overlay")
+    .attr("width", w)
+    .attr("height", h);
+
+function zoomWithUpdate(scale) {
+        var svg = d3.select("#math").select("svg");
+        var container = svg.select("g");
+        var h = svg.attr("height"), w = svg.attr("width");
+        
+        // Note: works only on the <g> element and not on the <svg> element
+	// which is a common mistake
+        container.attr("transform",
+                "translate(" + w + ", " + 0 + ") " +
+                "scale(" + scale + ") " +
+                "translate(" + -w + ", " + 0 + ")");
+}
+function zoom() {
+  svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 }
 
-g.transition()
-	.attr("transform", function(d, i) { 
-		if (d3.select(this).attr("transform")) {
-			return d3.select(this).attr("transform").replace("0)",( i * offset) + ")");
-		} else {
-			return "translate(0, " + (i * offset) + ")";
-		}
-	});
+function update(data) {
+	var length = 0
+	svg.attr("transform", "translate(0,0)")
+	
+	data.forEach(function(entry) { 
+		length += entry.value.length
+	})
+	console.log(length + ", " + scaleZoom(length))
+	zoomWithUpdate(Math.round(scaleZoom(length)*100)/100)
+	//bind the array of arrays to the groups (one for each row of the visualization)
+	var g = svg.selectAll("g")
+				.data(data)
+				.attr("class", function(d) { return d.type; });
 
-//bind the individual elements of each individual array to each text element
-var circles = g.selectAll("circle")
-			  .data(function(d, i) { return d.value; })
-			  .enter()
-			  .append("circle")
-			  .attr("r","2")
-			  .attr("cx",0)
-			  .attr("cy",0)
-	  	      .attr("fill", function(d, i) { return colorPicker(d); })
-		      .attr("stroke", "none")
-		      .attr("pointer-events","none")
+	g.enter()
+		.append("g")
+		.attr("class", function(d) { return d.type; })
 
-circles.transition()
-	   .duration(1000)
-	   .delay(function(d, i) { return i * 25; })
-	   .ease("easeInOutBack")
-	   .attr("cx", function(d, i) { return w - offset * i; })
-	   .attr("cy", offset)
-	   .transition()
-	   .attr("r", radius)
-	   .each("end", function(d, i) { d3.select(this).attr("pointer-events", null); })
+	//shift the rows to the left to align accordingly
+	for (var i=1; i < 7; i++) {
+		svg.selectAll("g.intermezzo." + numberToNumeric(i))
+			.attr("transform", function(d, i) { return "translate(" + (-i * offset) + ",0)"; })
+	}
 
-//.attr("class",function(d, i) { return classAssign(i); })
-circles.on("mouseover", function(d, i) {
-	d3.select(this).attr("r", radius * 1.5);
-})
-circles.on("mouseout", function(d, i) {
-	d3.select(this)
-	  .transition()
-	  .attr("r", radius);
-})
+	g//.transition()
+		.attr("transform", function(d, i) { 
+			if (d3.select(this).attr("transform")) {
+				return d3.select(this).attr("transform").replace(/\d+\)/, ( i * offset) + ")");
+			} else {
+				return "translate(0, " + (i * offset) + ")";
+			}
+		});
+
+	//bind the individual elements of each individual array to each text element
+	var circles = g.selectAll("circle")
+				  	.data(function(d, i) { return d.value; })
+				  	
+
+
+	circles.attr("cx", function(d, i) { return w - offset * i; })
+		   	.attr("cy", offset)
+  	      	.attr("fill", function(d, i) { return colorPicker(d); })
+		   	.attr("r", radius)
+				  
+
+
+	circles.enter()
+		  .append("circle")
+  	      .attr("fill", function(d, i) { return colorPicker(d); })
+		  .attr("r","2")
+		  .attr("cx",-10)
+		  .attr("cy",Math.floor((Math.random()*-.3*h)+1))
+	      .attr("stroke", "none")
+	      .attr("pointer-events","none")
+			.attr("fill", function(d, i) { return colorPicker(d); })
+			.transition()
+		   .duration(1000)
+		   .delay(function(d, i) { return i * 25; })
+		   .ease("easeInOutBack")
+		   .attr("cx", function(d, i) { return w - offset * i; })
+		   .attr("cy", offset)
+		   .transition()
+		   .attr("r", radius)
+		   .each("end", function(d, i) { d3.select(this).attr("pointer-events", null); })
+
+	//.attr("class",function(d, i) { return classAssign(i); })
+	circles.on("mouseover", function(d, i) {
+		d3.select(this).attr("r", radius * 1.5);
+	})
+	circles.on("mouseout", function(d, i) {
+		d3.select(this)
+		  .transition()
+		  .attr("r", radius);
+	})
+
+
+
+		/*g.data(data)
+		 .enter()
+		 .append("g");
+
+		circles.data(function(d, i) { return d.value; })
+			   .enter()
+			   .append("circle")*/
+
+		//appendText()
+
+		/*circles.attr("fill", function(d, i) { return colorPicker(d); });*/
+
+		g.exit().remove()
+
+		circles.exit()
+				.transition()
+				.attr("r", 0)
+				.remove();
+}
+
+
+update(data)
 
 optionButton = d3.select("input[name=fourOptions]")
 
@@ -315,29 +426,11 @@ $('input[name=fourOptions]').click(function() {
 var yScale = d3.scale.ordinal()
 						.domain(d3.range(data.length))
 						.rangeRoundBands([0,h], 0.05);
-
-function update(data) {
-
-	g.data(data)
-	 .enter()
-	 .append("g");
-
-	circles.data(function(d, i) { return d.value; })
-		   .enter()
-		   .append("circle")
-
-	appendText()
-
-	circles.attr("fill", function(d, i) { return colorPicker(d); });
-
-	//circles.exit().remove();
-}
-
 function appendText() {
 	if (addText.checked === true) {
 
 
-		var text = g.selectAll("text")
+		var text = svg.selectAll("g").selectAll("text")
 					.data(function(d, i) { return d.value; })
 					.enter()
 					.append("text");
@@ -350,7 +443,8 @@ function appendText() {
 			.attr("text-anchor", "middle")
 			//.attr("style", "dominant-baseline: central;")	
 
-		circles//.transition()
+	var circles = svg.selectAll("g").selectAll("circle")
+				//.transition()
 			   //.delay(400)
 			   //.duration(500)
 			   //.delay(function(d, i) { return i ; })
@@ -367,7 +461,8 @@ function appendText() {
 			   //.attr("cy",function(d, i) { return 0 /* - g[0][i].getCTM().f;*/ })
 			   //.attr("r", function(d, i) { return i ; })
 	} else {
-		circles.attr("class", "dim-circle")
+		var circles = svg.selectAll("g").selectAll("circle")
+				.attr("class", "dim-circle")
 				.transition()
 				.delay(500)
 			   .duration(1800)
@@ -381,7 +476,7 @@ function appendText() {
 			   //.attr("r", radius)
 			   
 
-		var text = g.selectAll("text")
+		var text = svg.selectAll("g").selectAll("text")
 
 		text.transition()
 		 .delay(2000)
