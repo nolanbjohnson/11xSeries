@@ -3,7 +3,7 @@ var data = math
 
 var paths = [{"id": 2, "type": "path", "d": "m 0,0 16.246395,0.1025 c -0.21915,-21.7265 -16.230378,-21.4773 -16.246395,-0.1025 z"}];
 
-var w = 1000, h = 1500, padding = 20, offset = 11, radius = 4;
+var w = 800, h = 1500, padding = 20, offset = 11, radius = 4;
 
 
 function useOption(name) {
